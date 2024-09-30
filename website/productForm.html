@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Producto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        .sidebar {
+            width: 200px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+
+        .sidebar a {
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #333;
+            display: block;
+        }
+
+        .sidebar a.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        .btn-create {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #000;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <a href="#">Inicio</a>
+        <a href="index.html" class="active">Productos</a>
+    </div>
+
+    <div class="content">
+        <h1 id="titleProduct">Editar Producto</h1>
+        <form id="editProductForm">
+            <div class="form-group">
+                <label for="id">Id:</label>
+                <input type="text" id="_id" name="_id" placeholder="Id" disabled>
+            </div>
+            <div class="form-group">
+                <label for="name">Nombre:</label>
+                <input type="text" id="name" name="name" placeholder="Nombre" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Precio:</label>
+                <input type="number" step="0.01" id="price" name="price" placeholder="Precio" required>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Cantidad:</label>
+                <input type="number" step="1" id="quantity" name="quantity" placeholder="Cantidad" required>
+            </div>
+            <div class="form-group">
+                <label for="supplier">Proveedor:</label>
+                <select id="supplier" name="supplier" required>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="category">Categoría:</label>
+                <select id="category" name="category" required>
+                </select>
+            </div>
+            <button id="submitButton" type="submit" class="btn-create">Actualizar</button>
+            <button id="backButton" class="btn-create">Atras</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const supplierSelect = document.getElementById('supplier');
+            const categorySelect = document.getElementById('category');
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('productId');
+            const submitButton = document.getElementById('submitButton');
+            const titleProduct = document.getElementById('titleProduct');
+            const backButton = document.getElementById('backButton');
+
+            if (productId) {
+                submitButton.textContent = 'Editar';
+                titleProduct.textContent = 'Editar Producto';
+            } else {
+                submitButton.textContent = 'Crear';
+                titleProduct.textContent = 'Crear Producto';
+            }
+            fetch(`http://localhost:3000/dev/product/${productId || '66fa0fe1f5d3b0d0cd4d6889'}`)
+                .then(response => response.json())
+                .then(data => {
+
+                    data.suppliers.forEach(supplier => {
+                        const option = document.createElement('option');
+                        option.value = supplier._id;
+                        option.text = supplier.name;
+                        supplierSelect.appendChild(option);
+                    });
+
+                    data.categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category._id;
+                        option.text = category.name;
+                        categorySelect.appendChild(option);
+                    });
+                    if (data.product) {
+                        document.getElementById('_id').value = data.product._id;
+                        document.getElementById('name').value = data.product.name;
+                        document.getElementById('price').value = data.product.price;
+                        document.getElementById('quantity').value = data.product.quantity;
+                        categorySelect.value = data.product.categoryId;
+                        supplierSelect.value = data.product.supplierId;
+                    }
+                })
+                .catch(error => console.error('Error al cargar el producto:', error));
+        });
+
+        document.getElementById('editProductForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('productId');
+
+            const dataProduct = {
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+                quantity: document.getElementById('quantity').value,
+                supplierId: document.getElementById('supplier').value,
+                categoryId: document.getElementById('category').value
+            };
+            if (productId) {
+                fetch(`http://localhost:3000/dev/product/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataProduct)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Producto actualizado:', data);
+                        alert('Producto actualizado correctamente');
+                    })
+                    .catch(error => console.error('Error al actualizar el producto:', error));
+            } else {
+                fetch(`http://localhost:3000/dev/product`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataProduct)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Producto creado:', data);
+                        alert('Producto creado correctamente');
+                    })
+                    .catch(error => console.error('Error al crear el producto:', error));
+            }
+        });
+
+        backButton.addEventListener('click', function () {
+            window.location.href = 'index.html';
+        });
+    </script>
+
+</body>
+
+</html>

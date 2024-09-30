@@ -1,0 +1,74 @@
+service: intecap-prueba
+provider:
+  name: aws
+  timeout: 900
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  endpointType: regional
+  environment:
+    NODE_ENV: ${file(./config/config.json):${opt:stage, self:provider.stage, 'dev'}.NODE_ENV}
+    ENV: ${file(./config/config.json):${opt:stage, self:provider.stage, 'dev'}.ENV}
+  deploymentBucket:
+    name: intecap-pruebas-deployment
+    serverSideEncryption: AES256
+functions:
+  getAllProduct:
+    handler: ./handlers/product-handler.getAllProduct
+    layers:
+      - ${file(./config/config.json):${opt:stage, self:provider.stage, 'dev'}.DEPENDENCIES_LAYER}
+    events:
+      - http:
+          path: /product
+          method: GET
+          cors: true
+  getProductById:
+    handler: ./handlers/product-handler.getProductById
+    layers:
+      - ${file(./config/config.json):${opt:stage, self:provider.stage, 'dev'}.DEPENDENCIES_LAYER}
+    events:
+      - http:
+          path: /product/{productId}
+          method: GET
+          cors: true
+  postProduct:
+    handler: ./handlers/product-handler.postProduct
+    layers:
+      - ${file(./config/config.json):${opt:stage, self:provider.stage, 'dev'}.DEPENDENCIES_LAYER}
+    events:
+      - http:
+          path: /product
+          method: POST
+          cors: true
+  putProduct:
+    handler: ./handlers/product-handler.putProduct
+    layers:
+      - ${file(./config/config.json):${opt:stage, self:provider.stage, 'dev'}.DEPENDENCIES_LAYER}
+    events:
+      - http:
+          path: /product/{productId}
+          method: PUT
+          cors: true
+  deleteProduct:
+    handler: ./handlers/product-handler.deleteProduct
+    layers:
+      - ${file(./config/config.json):${opt:stage, self:provider.stage, 'dev'}.DEPENDENCIES_LAYER}
+    events:
+      - http:
+          path: /product/{productId}
+          method: DELETE
+          cors: true
+package:
+  exclude:
+    - dependencies_layer/**
+    - node_modules/**
+    - package-lock.json
+plugins:
+  - serverless-pseudo-parameters
+  - serverless-offline
+  - serverless-prune-plugin
+  - serverless-deployment-bucket
+custom:
+  prune:
+    automatic: true
+    number: 3

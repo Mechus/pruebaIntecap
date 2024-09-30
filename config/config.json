@@ -1,0 +1,7 @@
+{
+    "dev": {
+        "DEPENDENCIES_LAYER": "arn:aws:lambda:us-east-1:878103010078:layer:dev-IntecapPruebaDependenciesLayer:1",
+        "ENV": "dev",
+        "NODE_ENV": "dev"
+    }
+}

@@ -1,0 +1,23 @@
+service: intecap-prueba-dependencies
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  memorySize: 512
+  timeout: 900
+  deploymentBucket:
+    name: intecap-pruebas-deployment
+    serverSideEncryption: AES256
+layers:
+  IntecapPruebaDependenciesLayer:
+    path: dependencies_layer
+    name: ${opt:stage, self:provider.stage, 'dev'}-IntecapPruebaDependenciesLayer
+    description: "Dependencies for Intecap Prueba Project"
+plugins:
+  - serverless-prune-plugin
+  - serverless-deployment-bucket
+custom:
+  prune:
+    automatic: true
+    number: 3

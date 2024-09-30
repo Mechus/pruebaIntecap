@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Productos</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .sidebar {
+            width: 200px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+
+        .sidebar a {
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #333;
+            display: block;
+        }
+
+        .sidebar a.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+
+        .btn-new {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #000;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            text-align: center;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background-color: #ccc;
+        }
+
+        .btn-confirm {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Eliminar</div>
+            <p>¿Está seguro de eliminar el producto?</p>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="cancelButton">Cancelar</button>
+                <button class="btn btn-confirm" id="confirmButton">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <a href="#">Inicio</a>
+        <a href="index.html" class="active">Productos</a>
+    </div>
+
+    <div class="content">
+        <h1>Listado de Productos</h1>
+        <a href="productForm.html" class="btn-new">Nuevo</a>
+        <br>
+        <br>
+        <br>
+        <br>
+        <table id="productsTable" class="display">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Id</th>
+                    <th style="width: 30%;">Nombre</th>
+                    <th style="width: 10%;">Precio</th>
+                    <th style="width: 10%;">Cantidad</th>
+                    <th style="width: 20%;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            const modal = document.getElementById('myModal');
+            const cancelButton = document.getElementById('cancelButton');
+            const confirmButton = document.getElementById('confirmButton');
+
+            $('#productsTable').on('click', '.open-modal-btn', function (e) {
+                e.preventDefault();
+                const productId = $(this).data('id');
+                openModal(productId);
+            });
+
+            function openModal(productId) {
+                const modal = document.getElementById('myModal');
+                modal.style.display = 'block';
+                const confirmButton = document.getElementById('confirmButton');
+                
+                confirmButton.onclick = function () {
+                    fetch(`http://localhost:3000/dev/product/${productId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            modal.style.display = 'none';
+                            $('#productsTable').DataTable().row(`[data-id="${productId}"]`).remove().draw();
+                        })
+                        .catch(error => console.error('Error al eliminar el producto:', error));
+                };
+
+                const cancelButton = document.getElementById('cancelButton');
+                cancelButton.onclick = function () {
+                    modal.style.display = 'none';
+                };
+            }
+
+            $('#productsTable').DataTable();
+            fetch('http://localhost:3000/dev/product')
+                .then(response => response.json())
+                .then(data => {
+                    const table = $('#productsTable').DataTable();
+                    data.forEach(producto => {
+                        table.row.add([
+                            producto._id,
+                            producto.name,
+                            producto.price,
+                            producto.quantity,
+                            `<a href="productForm.html?productId=${producto._id}">VER</a> / <a href="#" class="open-modal-btn" data-id="${producto._id}">ELIMINAR</a>`
+                        ]).draw();
+                    });
+                }).catch(error => console.error('Error al cargar los productos:', error));
+        });
+    </script>
+
+</body>
+
+</html>
